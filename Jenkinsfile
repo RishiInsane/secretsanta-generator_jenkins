@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('git-checkout') {
             steps {
-                git 'https://github.com/jaiswaladi246/secretsanta-generator.git'
+                git 'https://github.com/RishiInsane/secretsanta-generator_jenkins.git'
             }
         }
 
@@ -26,21 +26,13 @@ pipeline {
                sh "mvn test"
             }
         }
-        
-		stage('OWASP Dependency Check') {
-            steps {
-               dependencyCheck additionalArguments: ' --scan ./ ', odcInstallation: 'DC'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
-
 
         stage('Sonar Analysis') {
             steps {
                withSonarQubeEnv('sonar'){
-                   sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Santa \
+                   sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=santa \
                    -Dsonar.java.binaries=. \
-                   -Dsonar.projectKey=Santa '''
+                   -Dsonar.projectKey=santa '''
                }
             }
         }
@@ -55,8 +47,8 @@ pipeline {
          stage('Docker Build') {
             steps {
                script{
-                   withDockerRegistry(credentialsId: 'docker-cred') {
-                    sh "docker build -t  santa123 . "
+                   withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                    sh "docker build -t  santa:latest . "
                  }
                }
             }
@@ -65,39 +57,26 @@ pipeline {
         stage('Docker Push') {
             steps {
                script{
-                   withDockerRegistry(credentialsId: 'docker-cred') {
-                    sh "docker tag santa123 adijaiswal/santa123:latest"
-                    sh "docker push adijaiswal/santa123:latest"
+                   withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                    sh "docker tag santa:latest rishiraj1104/santa:latest"
+                    sh "docker push rishiraj1104/santa:latest"
                  }
+               }
+            }
+        }
+
+	stage('Deploy Application') {
+            steps {
+               script{
+                   withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                    sh "docker run -d -p 8081:8080 rishiraj1104/santa:latest "
+                }
                }
             }
         }
         
         	 
-        stage('Docker Image Scan') {
-            steps {
-               sh "trivy image adijaiswal/santa123:latest "
-            }
-        }}
         
-         post {
-            always {
-                emailext (
-                    subject: "Pipeline Status: ${BUILD_NUMBER}",
-                    body: '''<html>
-                                <body>
-                                    <p>Build Status: ${BUILD_STATUS}</p>
-                                    <p>Build Number: ${BUILD_NUMBER}</p>
-                                    <p>Check the <a href="${BUILD_URL}">console output</a>.</p>
-                                </body>
-                            </html>''',
-                    to: 'jaiswaladi246@gmail.com',
-                    from: 'jenkins@example.com',
-                    replyTo: 'jenkins@example.com',
-                    mimeType: 'text/html'
-                )
-            }
-        }
 		
 		
 
