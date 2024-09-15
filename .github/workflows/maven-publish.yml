@@ -18,10 +18,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up JDK 11
+    - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file
@@ -36,9 +36,9 @@ jobs:
         password: rishi@3123
     - name: Build and Push Docker Image
       run: |
-        docker build -t secret-santa .
-        docker tag secret-santa:latest rishiraj1104/secret-santa:latest
-        docker push rishiraj1104/secret-santa:latest
+        docker build -t santa:latest .
+        docker tag santa:latest rishiraj1104/santa:latest
+        docker push rishiraj1104/santa:latest
 
     - name: Analyze with SonarQube
       uses: SonarSource/sonarqube-scan-action@7295e71c9583053f5bf40e9d4068a0c974603ec8
@@ -47,6 +47,6 @@ jobs:
         SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST }}   # add the URL of your instance to the secrets of this repo with the name SONAR_HOST_URL (Settings > Secrets > Actions > add new repository secret)
       with:
         args:
-          -Dsonar.projectKey=Secret-Santa
+          -Dsonar.projectKey=santa
           -Dsonar.java.binaries=.
 
